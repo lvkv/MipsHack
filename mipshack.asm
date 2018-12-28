@@ -2,7 +2,7 @@
 
 .text
 
-# Part I
+# Initialize game
 init_game:
 li $v0, -200
 li $v1, -200
@@ -18,7 +18,7 @@ move $t2, $a2  # s2: *player_ptr
 # Open file
 li $v0, 13  # Syscall 13: Open file
 li $a1, 0  # Read-only flag
-li $a2, -1  # Mode (ignored)          
+li $a2, -1  # Mode (ignored)
 syscall
 bltz $v0, fail_1  # Fail if file fails to read off disk
 
@@ -65,7 +65,7 @@ move $a2, $t4  # a2: Num bytes to read: num_cols...
 addi $a2, $a2, 1  # Include the line feed at the end
 syscall
 li $t6, 0  # Col Counter
-move $t7, $sp  # Temp stack pointer 
+move $t7, $sp  # Temp stack pointer
 
 	col_loop_1:
 	beq $t6, $t4, break_col_loop_1  # Break when col counter = num_cols
@@ -78,12 +78,12 @@ move $t7, $sp  # Temp stack pointer
 	sb $t6, 1($t2)  # Store col counter into byte 1 of Player struct
 	rest_of_col_loop_1:
 	sb $t0, 0($t1)  # Store current char into *map_ptr
-	addi $t1, $t1, 1  # Increment *map_ptr 
+	addi $t1, $t1, 1  # Increment *map_ptr
 	addi $t6, $t6, 1  # Increment col counter
 	addi $t7, $t7, 1  # Increment temp stack pointer
 	j col_loop_1
-	
-break_col_loop_1:	
+
+break_col_loop_1:
 addi $t5, $t5, 1  # Increment row counter
 j row_loop_1
 break_row_loop_1:
@@ -112,7 +112,7 @@ li $v0, -1
 jr $ra  # gtfo
 
 
-# Part II
+# Check to see if given coordinates are valid for the current map
 is_valid_cell:
 li $v0, -200
 li $v1, -200
@@ -134,7 +134,7 @@ li $v0, -1
 jr $ra
 
 
-# Part III
+# Given a map and coordinates, return the cell located at those coordinates
 get_cell:
 li $v0, -200
 li $v1, -200
@@ -165,7 +165,7 @@ li $v0, -1  # Failure
 jr $ra  # gtfo
 
 
-# Part IV
+# Given a map, coordinates, and a char, set the cell at the given coords to the char
 set_cell:
 li $v0, -200
 li $v1, -200
@@ -198,7 +198,7 @@ li $v0, -1  # failure
 jr $ra  # gtfo
 
 
-# Part V
+# Reveal previously hidden area in the map based on the player's location
 reveal_area:
 li $v0, -200
 li $v1, -200
@@ -228,7 +228,7 @@ li $s4, 0  # Reset Col cnt
 
 	col_loop_5:
 	beq $s4, 3, break_col_loop_5
-	
+
 	# is_valid_cell(map_ptr, row, col)
 	move $a0, $s0  # Map
 	move $a1, $s1  # Row
@@ -239,7 +239,7 @@ li $s4, 0  # Reset Col cnt
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	beq $v0, -1, invalid_5
-	
+
 	# get_cell(map_ptr, row, col)
 	move $a0, $s0  # Map
 	move $a1, $s1  # Row
@@ -250,7 +250,7 @@ li $s4, 0  # Reset Col cnt
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	beq $v0, -1, invalid_5
-	
+
 	# set_cell(map_ptr, row, col, ch)
 	andi $v0, $v0, 0x7F  # Setting 'hidden' flag of char to NOT HIDDEN
 	move $a0, $s0  # Map
@@ -262,7 +262,7 @@ li $s4, 0  # Reset Col cnt
 	jal set_cell
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
-	
+
 	invalid_5:
 	addi $s2, $s2, 1  # Increment col
 	addi $s4, $s4, 1  # Increment Col cnt
@@ -282,7 +282,7 @@ lw $s4, 16($sp)
 addi $sp, $sp, 20  # We're done with this memory
 jr $ra
 
-# Part VI
+# Helper function in case of attacking
 get_attack_target:
 li $v0, -200
 li $v1, -200
@@ -344,7 +344,7 @@ li $v0, -1  # Failure
 jr $ra  # gtfo
 
 
-# Part VII (VIII?)
+# Calculate monster attack damage
 monster_attacks:
 li $v0, -200
 li $v1, -200
@@ -463,7 +463,7 @@ addi $sp, $sp, 20
 jr $ra
 
 
-# Part VIII (IX?)
+# Player movement helper function
 player_move:
 li $v0, -200
 li $v1, -200
@@ -491,7 +491,7 @@ move $s3, $a3  # Target col
 	jal monster_attacks
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
-	
+
 lb $t0, 2($s1)  # Load player health
 sub $t0, $t0, $v0  # Health -= Monster Damage
 sb $t0, 2($s1)  # Store updated health
@@ -506,7 +506,7 @@ blez $t0, killed_9  # If health <= 0 goto killed process
 	jal get_cell
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
-	
+
 beq $v0, '.', move_9
 beq $v0, '$', coin_9
 beq $v0, '*', guap_9
@@ -539,11 +539,11 @@ killed_9:  # Replace '@' at player's position with 'X'
 	addi $sp, $sp, 4
 	li $t9, -69
 	j end_9
-	
+
 finished_9:
 lbu $t0, 0($s1)  # Load player row
 lbu $t1, 1($s1)  # Load player col
-		
+
 	# set_cell(map_ptr, row, col, '.')
 	move $a0, $s0
 	move $a1, $t0
@@ -554,7 +554,7 @@ lbu $t1, 1($s1)  # Load player col
 	jal set_cell
 	lw $ra, ($sp)
 	addi $sp, $sp, 4
-	
+
 sb $s2, 0($s1)  # Store target row in player struct
 sb $s3, 1($s1)  # Store target col in player struct
 
@@ -580,7 +580,7 @@ jr $ra
 door_9:
 lbu $t0, 0($s1)  # Load player row
 lbu $t1, 1($s1)  # Load player col
-		
+
 	# set_cell(map_ptr, row, col, '.')
 	move $a0, $s0
 	move $a1, $t0
@@ -591,7 +591,7 @@ lbu $t1, 1($s1)  # Load player col
 	jal set_cell
 	lw $ra, ($sp)
 	addi $sp, $sp, 4
-	
+
 sb $s2, 0($s1)  # Store target row in player struct
 sb $s3, 1($s1)  # Store target col in player struct
 
@@ -616,7 +616,7 @@ jr $ra
 
 
 
-# Part IX (VII?)
+# Attacking helper function
 complete_attack:
 li $v0, -200
 li $v1, -200
@@ -703,7 +703,7 @@ addi $sp, $sp, 16
 jr $ra
 
 
-# Part X
+# Umbrella function for movement and attacks - a turn
 player_turn:
 li $v0, -200
 li $v1, -200
@@ -757,7 +757,7 @@ move $s4, $t1  # Target col
 beq $v0, -1, end_10  # Return 0 on invalid
 beq $v0, '#', end_10  # Return 0 on '#' (wall)
 p4_10:
-	
+
 	# get_attack_targer(map_ptr, player_ptr, direction)
 	move $a0, $s0  # Map
 	move $a1, $s1  # Player
@@ -769,7 +769,7 @@ p4_10:
 	addi $sp, $sp, 4
 
 beq $v0, -1, no_attack_10  # If returned -1, then there's no monster or door
-	
+
 	# Else, call complete attack to see if target cell is attackable
 	# complete_attack(map_ptr, player_ptr, target_row, target_col)
 	move $a0, $s0  # Map
@@ -783,7 +783,7 @@ beq $v0, -1, no_attack_10  # If returned -1, then there's no monster or door
 	addi $sp, $sp, 4
 
 j end_10
-no_attack_10:  # Otherwise, call player move and return that function’s return value as the return value of player turn
+no_attack_10:  # Otherwise, call player move and return that functionï¿½s return value as the return value of player turn
 
 	# player_move(map_ptr, player_ptr, target_row, target_col)
 	move $a0, $s0  # Map
@@ -817,7 +817,7 @@ li $v0, -1  # Failure
 jr $ra
 
 
-# Part XI
+# Press R to fill the map with light - blocked by walls, doors and monsters
 flood_fill_reveal:
 li $v0, -200
 li $v1, -200
@@ -868,9 +868,9 @@ while_11:
 		jal get_cell
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
-		
+
 		andi $v0, $v0, 0x7F  # Setting 'hidden' flag of char to NOT HIDDEN
-		
+
 		# set_cell(map, row, col, char)
 		move $a0, $s0  # Map
 		move $a1, $t9  # Row
@@ -881,10 +881,10 @@ while_11:
 		jal set_cell
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
-		
+
 	addi $t0, $t9, -1  # (-1, 0)
 	addi $t1, $t8, 0
-		
+
 		# if_help_11(row, col, Map, bit[][]visited)
 		move $a0, $t0  # Row
 		move $a1, $t1  # Col
@@ -895,18 +895,18 @@ while_11:
 		jal if_help_11
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
-	
+
 	beq $v0, -1, next_1_11  # If that tile wasn't floor, then skip stack pushing
 	addi $sp, $sp, -8
 	addi $t0, $t9, -1  # Recalculate coords
 	addi $t1, $t8, 0
 	sw $t0, 0($sp)  # Save them to the stack
 	sw $t1, 4($sp)
-	
+
 	next_1_11:
 	addi $t0, $t9, 1  # (1, 0)
 	addi $t1, $t8, 0
-	
+
 		# if_help_11(row, col, Map, bit[][]visited)
 		move $a0, $t0  # Row
 		move $a1, $t1  # Col
@@ -917,18 +917,18 @@ while_11:
 		jal if_help_11
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
-		
+
 	beq $v0, -1, next_2_11  # If that tile wasn't floor, then skip stack pushing
 	addi $sp, $sp, -8
 	addi $t0, $t9, 1  # (1, 0)
 	addi $t1, $t8, 0
 	sw $t0, 0($sp)  # Save them to the stack
 	sw $t1, 4($sp)
-	
+
 	next_2_11:
 	addi $t0, $t9, 0  # (0, -1)
 	addi $t1, $t8, -1
-	
+
 		# if_help_11(row, col, Map, bit[][]visited)
 		move $a0, $t0  # Row
 		move $a1, $t1  # Col
@@ -946,11 +946,11 @@ while_11:
 	addi $t1, $t8, -1
 	sw $t0, 0($sp)  # Save them to the stack
 	sw $t1, 4($sp)
-	
+
 	next_3_11:
 	addi $t0, $t9, 0  # (0, 1)
 	addi $t1, $t8, 1
-	
+
 		# if_help_11(row, col, Map, bit[][]visited)
 		move $a0, $t0  # Row
 		move $a1, $t1  # Col
@@ -968,7 +968,7 @@ while_11:
 	addi $t1, $t8, 1
 	sw $t0, 0($sp)  # Save them to the stack
 	sw $t1, 4($sp)
-	
+
 	next_4_11:
 	j while_11
 break_while_11:
@@ -978,7 +978,7 @@ lw $s2, 8($sp)
 lw $s3, 12($sp)
 lw $fp, 16($sp)
 addi $sp, $sp, 20
-li $v0, 0  # Success 
+li $v0, 0  # Success
 jr $ra
 fail_11:
 lw $s0, 0($sp)
